@@ -1,0 +1,8 @@
+fastapi==0.162.0
+uvicorn==0.41.0
+python-multipart==0.0.22
+python-docx==1.2.0
+faster-whisper==1.2.1
+yt-dlp[default]==2026.10.26
+# PyAV 19 eliminó metadata_errors; Faster-Whisper 1.2.1 requiere la API previa.
+av==16.1.0
