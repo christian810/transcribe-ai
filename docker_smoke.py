@@ -35,7 +35,7 @@ def main():
         assert b'Transcribe' in urllib.request.urlopen(request).read()
         # Seed completed result without downloading a model. Check persistence through real restart.
         id = 'a' * 32
-        code = "import store; store.enqueue('" + id + "','fixture.wav','ca',''); store.update('" + id + "',status='done',text='Bon dia',detected='ca')"
+        code = "from pathlib import Path; import store; Path('/data/jobs/" + id + "').mkdir(); store.enqueue('" + id + "','fixture.wav','ca',''); store.update('" + id + "',status='done',text='Bon dia',detected='ca')"
         docker('exec', name, 'python', '-c', code)
         docker('restart', name)
         for _ in range(30):
