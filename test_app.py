@@ -70,3 +70,29 @@ def test_queue_limit_and_cleanup(client, monkeypatch):
         con.execute('UPDATE jobs SET updated=? WHERE id=?', (time.time() - c.RETENTION - 5, id))
     cleanup()
     assert store.get(id) is None and not folder.exists()
+
+
+def test_lan_without_login(client, monkeypatch):
+    monkeypatch.setattr(c, 'AUTH_REQUIRED', False)
+    monkeypatch.setattr(c, 'PASSWORD', '')
+    response = client.get('/', auth=None)
+    assert response.status_code == 200
+    assert 'www-authenticate' not in response.headers
+    assert client.get('/api/config', auth=None).status_code == 200
+    response = client.post('/api/jobs', auth=None, files={'file': ('reunion.wav', b'test')})
+    assert response.status_code == 202
+    id = response.json()['id']
+    store.update(id, status='done', text='Bon dia.', detected='ca')
+    assert client.get('/api/jobs/' + id, auth=None).status_code == 200
+    response = client.post('/api/jobs/' + id + '/word', auth=None, json={'text': 'Text revisat.'})
+    assert response.status_code == 200 and response.content.startswith(b'PK')
+    assert client.post('/api/jobs', auth=None, headers={'Origin': 'https://evil.test'},
+                       files={'file': ('reunion.wav', b'test')}).status_code == 403
+
+
+def test_lan_rejects_public_peer_and_forwarded_spoof(monkeypatch):
+    from fastapi.testclient import TestClient
+    from main import app
+    monkeypatch.setattr(c, 'AUTH_REQUIRED', False)
+    with_client = TestClient(app, base_url='http://localhost', client=('8.8.8.8', 50000))
+    assert with_client.get('/', headers={'X-Forwarded-For': '192.168.5.10'}).status_code == 403

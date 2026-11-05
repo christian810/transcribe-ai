@@ -60,3 +60,13 @@ python3 docker_smoke.py
 ```
 
 Ejecutar `docker_smoke.py` con un usuario autorizado para Docker o `sudo python3 docker_smoke.py`. Usa solo biblioteca estándar y comprueba HTTP, auth, Word y persistencia tras reinicio; no descarga modelos ni valida precisión. El script `docker_smoke.py` pasó en GitHub Actions. Los escenarios de voz hablada de `real_smoke.py` siguen pendientes.
+
+
+## Actualización LAN sin cuentas — 05/11/2026
+
+- Petición actual: acceso directo por IP privada desde equipos del Consell, sin usuarios ni túneles SSH.
+- Valores iniciales: `BIND_IP=192.168.5.6`, `PORT=80`, `AUTH_REQUIRED=false`; instalador acepta otra IP privada ya asignada al servidor.
+- Suite local actual: **27 pruebas aprobadas**. Se añaden acceso a página/API, subida, consulta y Word sin credenciales; rechazo de escrituras desde otro origen y de cliente con IP pública, incluso con `X-Forwarded-For` privado falsificado.
+- Las pruebas anteriores de autenticación siguen comprobando el modo opcional con `AUTH_REQUIRED=true`.
+- `bash -n install.sh update.sh` y `ruff check .`: aprobados.
+- El informe de GitHub Actions anterior corresponde al commit anterior. La configuración LAN y la nueva prueba Docker deben validarse de nuevo en CI y en el servidor real; no se ha conectado a 192.168.5.6 desde este entorno.

@@ -43,15 +43,31 @@ fi
 docker compose version >/dev/null || { echo 'Falta Docker Compose v2. Instálalo para tu motor de Docker existente.'; exit 1; }
 systemctl enable --now docker
 if [[ ! -f .env ]]; then cp .env.example .env; fi
-python3 - <<'PY'
+python3 - "${1:-192.168.5.6}" <<'PY'
 from pathlib import Path
-import secrets
+import ipaddress
+import json
+import subprocess
+import sys
+
+address = ipaddress.ip_address(sys.argv[1])
+if address.version != 4 or not address.is_private or address.is_loopback or address.is_link_local or address.is_unspecified:
+    raise SystemExit('Indica la IP privada que has asignado al servidor, por ejemplo: sudo bash install.sh 192.168.5.6')
+interfaces = json.loads(subprocess.check_output(['ip', '-j', 'addr', 'show'], text=True))
+assigned = {item.get('local') for interface in interfaces for item in interface.get('addr_info', [])}
+if str(address) not in assigned:
+    raise SystemExit(f'La IP {address} no está asignada a Ubuntu. Configúrala en la red del servidor antes de instalar.')
 p = Path('.env')
 s = p.read_text()
-if 'APP_PASSWORD=\n' in s:
-    s = s.replace('APP_PASSWORD=\n', 'APP_PASSWORD=' + secrets.token_urlsafe(24) + '\n')
-p.write_text(s)
+values = {'AUTH_REQUIRED': 'false', 'BIND_IP': str(address), 'PORT': '80',
+          'ALLOWED_HOSTS': f'localhost,127.0.0.1,{address}', 'PUBLIC_ORIGIN': ''}
+lines = s.splitlines()
+for key, value in values.items():
+    lines = [line for line in lines if not line.startswith(key + '=')]
+    lines.append(key + '=' + value)
+p.write_text('\n'.join(lines) + '\n')
 p.chmod(0o600)
+print(f'Acceso directo por LAN: http://{address} — sin usuario ni contraseña.')
 PY
 # Validar sin mostrar la configuración resuelta, que contiene secretos.
 docker compose config --quiet
@@ -59,6 +75,6 @@ available_kb=$(df --output=avail . | tail -1)
 [[ ${available_kb// /} -ge 10485760 ]] || { echo 'Se necesitan al menos 10 GiB libres para imagen, modelos y trabajos.'; exit 1; }
 echo 'Construyendo y desplegando Transcribe AI…'
 docker compose up -d --build --wait --wait-timeout 240
-echo 'Servicio preparado en http://127.0.0.1:8000 mediante túnel SSH de PuTTY.'
-echo 'Para consultar usuario y contraseña en esta terminal: sudo cat .env'
+echo "Servicio preparado: http://${1:-192.168.5.6}"
+echo 'Cualquier equipo de la red local puede abrir esa dirección en su navegador.'
 echo 'El primer audio descargará el modelo. No se necesita escritorio gráfico.'

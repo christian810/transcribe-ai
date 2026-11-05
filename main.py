@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 from contextlib import asynccontextmanager
 import secrets
 import shutil
@@ -17,11 +18,15 @@ from documents import build_word
 from security import youtube_url
 from worker import loop
 
-basic = HTTPBasic()
+basic = HTTPBasic(auto_error=False)
 failures = {}
 
 
-def auth(request: Request, credentials: HTTPBasicCredentials = Depends(basic)):
+def auth(request: Request, credentials: HTTPBasicCredentials | None = Depends(basic)):
+    if not c.AUTH_REQUIRED:
+        return 'lan'
+    if credentials is None:
+        raise HTTPException(401, 'Acceso no válido', headers={'WWW-Authenticate': 'Basic realm="Transcribe AI"'})
     ip = request.client.host if request.client else 'local'
     now = time.monotonic()
     with auth_lock:
@@ -49,7 +54,7 @@ upload_lock = asyncio.Lock()
 
 @asynccontextmanager
 async def lifespan(app):
-    if len(c.PASSWORD) < 16:
+    if c.AUTH_REQUIRED and len(c.PASSWORD) < 16:
         raise RuntimeError('APP_PASSWORD debe contener al menos 16 caracteres. Ejecuta install.sh.')
     store.init()
     stop = threading.Event()
@@ -96,8 +101,14 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=c.ALLOWED_HOSTS)
 
 @app.middleware('http')
 async def headers(request, call_next):
+    try:
+        peer = ipaddress.ip_address(request.client.host)
+        if not any(peer in network for network in c.LAN_NETWORKS):
+            return JSONResponse({'detail': 'Acceso disponible solo desde la red local'}, 403)
+    except (ValueError, AttributeError):
+        return JSONResponse({'detail': 'Origen de red no permitido'}, 403)
     if request.method in {'POST', 'PUT', 'DELETE', 'PATCH'}:
-        # Basic auth is browser-ambient: reject cross-origin writes including login CSRF.
+        # Reject cross-origin requests that would enqueue jobs or export documents.
         if request.headers.get('sec-fetch-site') == 'cross-site':
             return JSONResponse({'detail': 'Origen no permitido'}, 403)
         origin = request.headers.get('origin')
