@@ -38,6 +38,9 @@ def main():
         code = "from pathlib import Path; import store; Path('/data/jobs/" + id + "').mkdir(); store.enqueue('" + id + "','fixture.wav','ca',''); store.update('" + id + "',status='done',text='Bon dia',detected='ca')"
         docker('exec', name, 'python', '-c', code)
         docker('restart', name)
+        # Docker may allocate a different ephemeral published port on restart.
+        binding = json.loads(docker('inspect', name))[0]['NetworkSettings']['Ports']['8000/tcp'][0]
+        origin = 'http://127.0.0.1:' + binding['HostPort']
         for _ in range(30):
             try:
                 request = urllib.request.Request(origin + '/api/jobs/' + id, headers={'Authorization': 'Basic ' + auth})
@@ -52,6 +55,9 @@ def main():
             headers={'Authorization': 'Basic ' + auth, 'Content-Type': 'application/json'})
         assert urllib.request.urlopen(request).read().startswith(b'PK')
         print('Docker HTTP/auth/Word/persistence restart: passed')
+    except BaseException:
+        print(docker('logs', name))
+        raise
     finally:
         subprocess.run(['docker', 'rm', '-f', name], check=False, capture_output=True)
         subprocess.run(['docker', 'volume', 'rm', volume], check=False, capture_output=True)
