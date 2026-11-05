@@ -4,6 +4,21 @@ Una página privada para subir audio/vídeo o pegar un enlace de YouTube, transc
 
 ## Instalación en tu Ubuntu Server desde PuTTY
 
+La opción más sencilla si todavía no has configurado GitHub en Ubuntu es usar su CLI:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y git gh
+gh auth login --hostname github.com --git-protocol https --web
+gh auth setup-git
+gh repo clone christian810/transcribe-ai
+cd transcribe-ai
+sudo bash install.sh
+sudo cat .env
+```
+
+Sigue el enlace y el código de inicio de sesión que muestre `gh` en tu navegador de Windows. No necesitas navegador ni escritorio en Ubuntu. Esa autorización se guarda en el usuario del servidor; no la compartas. Las alternativas SSH/HTTPS manuales se describen a continuación.
+
 Repositorio privado: autentica Git con una clave SSH de GitHub o un token mediante el gestor de credenciales. **No pongas tokens en la URL ni en comandos compartidos.** Una sesión de ChatGPT/GitHub no autentica automáticamente el servidor.
 
 ```bash
