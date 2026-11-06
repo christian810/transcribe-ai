@@ -1,6 +1,6 @@
 # Transcribe AI — web local del Consell
 
-Abre **http://192.168.5.6** desde un equipo de la red del Consell, sube audio/vídeo o pega YouTube, pulsa **Transcribir**, revisa el texto y descarga **Word (.docx)**. Sin usuarios, contraseñas, cuentas ni túneles SSH para quienes usan la web.
+Abre **http://192.168.1.6** desde un equipo de la red del Consell, sube audio/vídeo o pega YouTube, pulsa **Transcribir**, revisa el texto y descarga **Word (.docx)**. Sin usuarios, contraseñas, cuentas ni túneles SSH para quienes usan la web.
 
 ## Instalar una vez en Ubuntu
 
@@ -11,12 +11,12 @@ sudo apt-get update
 sudo apt-get install -y git
 git clone https://github.com/christian810/transcribe-ai.git
 cd transcribe-ai
-sudo bash install.sh 192.168.5.6
+sudo bash install.sh 192.168.1.6
 ```
 
 Si el repositorio se configura como privado, el administrador deberá autenticar Git una vez para descargarlo. Esto no crea usuarios ni pide cuentas a quienes utilizan la web.
 
-Después, cualquier persona con acceso de red al servidor abre **http://192.168.5.6** en su navegador. PuTTY solo sirve para instalar o mantener el servidor; no hace falta dejarlo conectado. Ubuntu funciona sin escritorio.
+Después, cualquier persona con acceso de red al servidor abre **http://192.168.1.6** en su navegador. PuTTY solo sirve para instalar o mantener el servidor; no hace falta dejarlo conectado. Ubuntu funciona sin escritorio.
 
 Para cambiar a otra IP privada asignada manualmente:
 
@@ -48,10 +48,10 @@ sudo bash update.sh
 
 | Variable en .env | Valor inicial | Función |
 |---|---|---|
-| BIND_IP | 192.168.5.6 | IP privada del servidor |
+| BIND_IP | 192.168.1.6 | IP privada del servidor |
 | PORT | 80 | URL directa sin escribir puerto |
 | AUTH_REQUIRED | false | Sin inicio de sesión |
-| ALLOWED_HOSTS | localhost,127.0.0.1,192.168.5.6 | Hosts aceptados por la aplicación |
+| ALLOWED_HOSTS | localhost,127.0.0.1,192.168.1.6 | Hosts aceptados por la aplicación |
 | LAN_NETWORKS | Redes privadas y loopback | Clientes permitidos por IP real de conexión |
 | WHISPER_MODEL | small | Modelo abierto configurable |
 | WHISPER_DEVICE / WHISPER_COMPUTE_TYPE | cpu / int8 | Ejecución CPU inicial |
