@@ -21,7 +21,7 @@ Después, cualquier persona con acceso de red al servidor abre **http://192.168.
 Para cambiar a otra IP privada asignada manualmente:
 
 ```bash
-sudo bash install.sh 192.168.5.20
+sudo bash install.sh 192.168.1.10
 ```
 
 El instalador conserva los datos y modelos; ajusta IP, puerto 80 y acceso sin autenticación. Si el puerto 80 ya lo usa otro servicio, cambia `PORT` en `.env` y recrea con `sudo docker compose up -d`. No publica el servicio en el router ni instala certificados. No conectes este modo sin cuentas a Internet.
